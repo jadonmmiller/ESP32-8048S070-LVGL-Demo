@@ -13,9 +13,6 @@ Arduino_ESP32RGBPanel *rgbpanel = new Arduino_ESP32RGBPanel(
 Arduino_RGB_Display *gfx = new Arduino_RGB_Display(
     800 /* width */, 480 /* height */, rgbpanel, 0 /* rotation */, true /* auto_flush */);
 
-/*******************************************************************************
- * Please config the touch panel in touch.h
- ******************************************************************************/
 #include "touch.h"
 
 /* Change to your screen resolution */
@@ -31,19 +28,13 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
   uint32_t w = (area->x2 - area->x1 + 1);
   uint32_t h = (area->y2 - area->y1 + 1);
 
-#if (LV_COLOR_16_SWAP != 0)
-  gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
-#else
   gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
-#endif
 
   lv_disp_flush_ready(disp);
 }
 
 void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
-  if (touch_has_signal())
-  {
     if (touch_touched())
     {
       data->state = LV_INDEV_STATE_PR;
@@ -51,27 +42,15 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
       /*Set the coordinates*/
       data->point.x = touch_last_x;
       data->point.y = touch_last_y;
-      Serial.print( "Data x " );
-      Serial.println( data->point.x );
-      Serial.print( "Data y " );
-      Serial.println( data->point.y );
     }
-    else if (touch_released())
+    else
     {
       data->state = LV_INDEV_STATE_REL;
     }
-  }
-  else
-  {
-    data->state = LV_INDEV_STATE_REL;
-  }
 }
 
 void setup()
 {
-  Serial.begin(115200);
-  // while (!Serial);
-  Serial.println("LVGL Widgets Demo");
   // Init Display
   gfx->begin();
 #ifdef TFT_BL
@@ -92,20 +71,12 @@ void setup()
   digitalWrite(TOUCH_GT911_RST, HIGH);
   delay(10);
   touch_init();
-//  touch.setTouch( calData );
 
   screenWidth = gfx->width();
   screenHeight = gfx->height();
-#ifdef ESP32
   disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * screenWidth *screenHeight/4  , MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-#else
-  disp_draw_buf = (lv_color_t *)malloc(sizeof(lv_color_t) * screenWidth *screenHeight/4);
-#endif
-  if (!disp_draw_buf)
-  {
-    Serial.println("LVGL disp_draw_buf allocate failed!");
-  }
-  else
+
+  if (disp_draw_buf)
   {
     lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, screenWidth *screenHeight/4);
 
@@ -126,8 +97,6 @@ void setup()
     lv_indev_drv_register(&indev_drv);
 
     lv_demo_widgets();
-    //lv_demo_benchmark();
-    Serial.println("Setup done");
   }
 }
 
@@ -136,24 +105,3 @@ void loop()
   lv_timer_handler(); /* let the GUI do its work */
   delay(5);
 }
-
-
-/*
-#include <Arduino.h>
-#include <lv_conf.h>
-#include <lvgl.h>
-
-#include "gui/gui.h"
-
-void setup() {
-  gui_start();
-  
-}
-
-void loop() {
-  lv_timer_handler();
-
-  delay(5);
-}
-
-*/
