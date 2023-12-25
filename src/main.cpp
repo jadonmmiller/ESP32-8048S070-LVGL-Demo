@@ -3,6 +3,13 @@
 #include <Arduino_GFX_Library.h>
 #define TFT_BL 2
 
+/* Change to your screen resolution */
+#define screenWidth 800
+#define screenHeight 480
+static lv_disp_draw_buf_t draw_buf;
+static lv_color_t disp_draw_buf[screenWidth * screenHeight / 4];
+static lv_disp_drv_t disp_drv;
+
 Arduino_ESP32RGBPanel *rgbpanel = new Arduino_ESP32RGBPanel(
     41 /* DE */, 40 /* VSYNC */, 39 /* HSYNC */, 42 /* PCLK */,
     14 /* R0 */, 21 /* R1 */, 47 /* R2 */, 48 /* R3 */, 45 /* R4 */,
@@ -11,16 +18,9 @@ Arduino_ESP32RGBPanel *rgbpanel = new Arduino_ESP32RGBPanel(
     0 /* hsync_polarity */, 180 /* hsync_front_porch */, 30 /* hsync_pulse_width */, 16 /* hsync_back_porch */,
     0 /* vsync_polarity */, 12 /* vsync_front_porch */, 13 /* vsync_pulse_width */, 10 /* vsync_back_porch */);
 Arduino_RGB_Display *gfx = new Arduino_RGB_Display(
-    800 /* width */, 480 /* height */, rgbpanel, 0 /* rotation */, true /* auto_flush */);
+    screenWidth /* width */, screenHeight /* height */, rgbpanel, 0 /* rotation */, true /* auto_flush */);
 
 #include "touch.h"
-
-/* Change to your screen resolution */
-static uint32_t screenWidth;
-static uint32_t screenHeight;
-static lv_disp_draw_buf_t draw_buf;
-static lv_color_t *disp_draw_buf;
-static lv_disp_drv_t disp_drv;
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -72,13 +72,7 @@ void setup()
   delay(10);
   touch_init();
 
-  screenWidth = gfx->width();
-  screenHeight = gfx->height();
-  disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * screenWidth *screenHeight/4  , MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-
-  if (disp_draw_buf)
-  {
-    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, screenWidth *screenHeight/4);
+    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, screenWidth * screenHeight / 10);
 
     /* Initialize the display */
     lv_disp_drv_init(&disp_drv);
@@ -97,7 +91,6 @@ void setup()
     lv_indev_drv_register(&indev_drv);
 
     lv_demo_widgets();
-  }
 }
 
 void loop()
